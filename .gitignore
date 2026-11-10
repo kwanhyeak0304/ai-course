@@ -4,3 +4,7 @@ __pycache__/
 vague_*.txt
 out_*.py
 *.db
+*.npz
+week10/*.json
+week10/*.pdf
+week11/out/
