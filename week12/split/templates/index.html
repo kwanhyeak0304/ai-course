@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>나눠 내기 계산기</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 16px;
+      font-family: -apple-system, "Malgun Gothic", sans-serif;
+      font-size: 16px; line-height: 1.5;
+      background: #f4f5f7; color: #222;
+    }
+    main { max-width: 480px; margin: 0 auto; }
+    h1 { font-size: 22px; margin: 8px 0 16px; }
+    h2 { font-size: 18px; margin: 0 0 12px; }
+    .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    label { display: block; font-weight: 600; margin: 12px 0 6px; }
+    input[type=text], input[type=file] {
+      width: 100%; min-height: 48px; padding: 10px 12px;
+      font-size: 16px; border: 1px solid #ccc; border-radius: 8px; background: #fff;
+    }
+    input[type=file] { padding: 10px; }
+    button {
+      width: 100%; min-height: 48px; margin-top: 16px;
+      font-size: 17px; font-weight: 700;
+      border: 0; border-radius: 8px; background: #2f6fed; color: #fff;
+    }
+    button.sub { background: #555; }
+    button:active { opacity: .8; }
+    .result { text-align: center; }
+    .big { font-size: 32px; font-weight: 800; color: #2f6fed; margin: 4px 0; }
+    .note { color: #555; font-size: 15px; }
+    .error { color: #c62828; font-weight: 600; }
+    .row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .row input:first-child { flex: 3; }
+    .row input:last-child { flex: 2; text-align: right; }
+    .hint { color: #666; font-size: 14px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>나눠 내기 계산기</h1>
+
+  {% if result %}
+  <section class="card result">
+    <div class="note">{{ "{:,}".format(result.total) }}원 ÷ {{ result.people }}명</div>
+    {% if result.remainder == 0 %}
+      <div class="big">1인당 {{ "{:,}".format(result.base) }}원</div>
+    {% else %}
+      <div class="big">1인당 {{ "{:,}".format(result.ceil) }}원</div>
+      <div class="note">
+        나누어떨어지지 않습니다. 모두 {{ "{:,}".format(result.ceil) }}원씩 내면
+        {{ "{:,}".format(result.extra) }}원이 남습니다.<br>
+        정확히 나누면 {{ "{:,}".format(result.base) }}원씩 내고
+        {{ result.remainder }}명이 1원씩 더 냅니다.
+      </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <section class="card">
+    <h2>금액으로 계산</h2>
+    <form method="post">
+      <input type="hidden" name="action" value="calc">
+      <label for="amount">총 금액 (원)</label>
+      <input type="text" id="amount" name="amount" inputmode="numeric"
+             placeholder="예: 17000" value="{{ amount }}">
+      <label for="people">인원수 (명)</label>
+      <input type="text" id="people" name="people" inputmode="numeric"
+             placeholder="예: 3" value="{{ people }}">
+      {% if error %}<p class="error">{{ error }}</p>{% endif %}
+      <button type="submit">계산하기</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>영수증 사진으로 계산</h2>
+    <form method="post" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="receipt">
+      <label for="photo">영수증 사진</label>
+      <input type="file" id="photo" name="photo" accept="image/*">
+      <label for="people2">인원수 (명)</label>
+      <input type="text" id="people2" name="people" inputmode="numeric"
+             placeholder="예: 3" value="{{ people }}">
+      <p class="hint">사진을 읽는 데 10~30초쯤 걸릴 수 있습니다.</p>
+      {% if receipt_error %}<p class="error">{{ receipt_error }}</p>{% endif %}
+      <button type="submit" onclick="this.textContent='읽는 중...'">사진 읽고 계산하기</button>
+    </form>
+  </section>
+
+  {% if items %}
+  <section class="card">
+    <h2>읽은 항목</h2>
+    <p class="hint">AI가 읽은 금액은 틀릴 수 있습니다. 사진과 다르면 고친 뒤 다시 계산하세요.</p>
+    <form method="post">
+      <input type="hidden" name="action" value="recalc">
+      {% for it in items %}
+      <div class="row">
+        <input type="text" name="item_name" value="{{ it.name }}" aria-label="항목 이름">
+        <input type="text" name="item_price" value="{{ it.price }}" inputmode="numeric" aria-label="금액">
+      </div>
+      {% endfor %}
+      <p><strong>합계 {{ "{:,}".format(items | sum(attribute="price")) }}원</strong></p>
+      <label for="people3">인원수 (명)</label>
+      <input type="text" id="people3" name="people" inputmode="numeric" value="{{ people }}">
+      <button type="submit" class="sub">고친 금액으로 다시 계산</button>
+    </form>
+  </section>
+  {% endif %}
+</main>
+</body>
+</html>
